@@ -1,74 +1,88 @@
-import ollama
-from settings import AGENT_SETTINGS, MESSAGES
+import settings
+from llm_client import LLMClient
+from workspace_manager import WorkspaceManager
+from agents import NaakoAgent, SabukoAgent
+import re
 
-MODEL = AGENT_SETTINGS["main"]["model"]
-SYSTEM_PROMPT = AGENT_SETTINGS["main"]["system_prompt"]
-SUBAGENT_SYSTEM_PROMPT = AGENT_SETTINGS["sub"]["default"]["system_prompt"]
+class PDCAEngine:
+    """
+    The core engine that drives the automated PDCA cycle.
+    Plan -> Do -> Check -> Act.
+    """
+    def __init__(self):
+        self.llm = LLMClient()
+        self.ws = WorkspaceManager()
+        self.naako = NaakoAgent(self.llm, self.ws)
+        self.sabuko = SabukoAgent(self.llm, self.ws)
+        self.max_iterations = 100
 
+    def parse_plan(self, plan_text: str):
+        """
+        Parses the plan text into a list of executable tasks.
+        Format expected: 1. [Task Name] Description (タイプ: nlp/code)
+        """
+        tasks = []
+        lines = plan_text.strip().split('\n')
+        for line in lines:
+            match = re.search(r'\d+\.\s+\[(.*?)\]\s+(.*?)\s+\(タイプ:\s*(nlp|code)\)', line)
+            if match:
+                tasks.append({
+                    "name": match.group(1),
+                    "description": match.group(2),
+                    "type": match.group(3)
+                })
+        return tasks
 
-def _chat(system_prompt: str, prompt: str) -> str:
-    response = ollama.chat(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ],
-    )
-    return response["message"]["content"]
+    def run(self, user_request: str):
+        print(f"🚀 依頼を受信しました: {user_request}")
+        
+        # Initial Plan
+        print("\n[Plan] なあこが計画を立てています...")
+        plan_text = self.naako.plan_task(user_request)
+        print(f"計画案:\n{plan_text}")
 
+        iteration = 0
+        while iteration < self.max_iterations:
+            iteration += 1
+            print(f"\n--- PDCA サイクル {iteration}回目 ---")
+            
+            tasks = self.parse_plan(self.ws.read("plan.txt"))
+            if not tasks:
+                print("有効なタスクが見つかりませんでした。計画を再策定します。")
+                self.naako.plan_task(user_request)
+                continue
 
-def _call_subagent(prompt: str, system_prompt: str = SUBAGENT_SYSTEM_PROMPT) -> str:
-    """サブエージェントを呼び出し、プロンプトを渡して返答を返す。"""
-    return _chat(system_prompt, prompt)
+            all_success = True
+            for task in tasks:
+                print(f"\n[Do] さぶこがタスク「{task['name']}」を実行中...")
+                result = self.sabuko.execute_task(task['description'], task['type'])
+                print(f"結果: {result[:100]}...")
 
-
-def talk_to_naako(prompt: str, use_subagent: bool = True) -> str:
-    if not use_subagent:
-        # サブエージェントを通さず、なあこが直接回答する
-        return _chat(SYSTEM_PROMPT, prompt)
-
-    # 1. メインエージェントでプロンプトを英語に翻訳
-    translation_prompt = f"以下のユーザー依頼を、サブエージェントに指示するための正確な英語に翻訳してください。翻訳結果のみを出力してください:\n\n{prompt}"
-    english_prompt = _chat(SYSTEM_PROMPT, translation_prompt)
-
-    # 2. 翻訳後のプロンプトをサブエージェントに渡す
-    sub_result = _call_subagent(english_prompt)
-    summary_prompt = (
-        f"ユーザーの依頼:\n{prompt}\n\n"
-        f"サブエージェントの処理結果:\n{sub_result}\n\n"
-        "上記の処理結果だけを根拠に、依頼への返答を要約してください。"
-    )
-    return _chat(SYSTEM_PROMPT, summary_prompt)
-
+                print(f"[Check] なあこが結果を評価中...")
+                if self.naako.evaluate_result(task['name'], result):
+                    print("✅ 成功")
+                else:
+                    print("❌ 失敗")
+                    all_success = False
+                    
+                    print(f"[Act] なあこが計画を修正しています...")
+                    # We stop current task list and adjust the plan immediately
+                    self.naako.adjust_plan(task['name'], result)
+                    print(f"修正後の計画:\n{self.ws.read('plan.txt')}")
+                    break # Exit task loop to restart with new plan
+            
+            # Context compression after each cycle to prevent bloat
+            if iteration % 5 == 0 or not all_success:
+                self.naako.compress_context("memo.txt")
+            
+            if all_success:
+                print("\n✨ すべてのタスクが成功しました！")
+                return True
+        
+        print("\n⚠️ 最大試行回数に達しましたが、完了しませんでした。")
+        return False
 
 if __name__ == "__main__":
-    print("【エージェント『なあこ』を起動しています...】")
-    print("入力はサブエージェントで処理し、なあこが要約して返します。")
-    print("終了するには /bye と入力してください。")
-    print("サブエージェントの有効/無効は /subko enable または /subko disable で切り替えられます。\n")
-
-    use_subagent = True
-    while True:
-        prompt = input("> ").strip()
-        if prompt == "/bye":
-            print(MESSAGES["exit"])
-            break
-        if not prompt:
-            continue
-
-        if prompt == "/subko enable":
-            use_subagent = True
-            print(MESSAGES["subko_enable"])
-            continue
-        if prompt == "/subko disable":
-            use_subagent = False
-            print(MESSAGES["subko_disable"])
-            continue
-        if prompt == "/subko":
-            use_subagent = not use_subagent
-            message = MESSAGES["subko_enable"] if use_subagent else MESSAGES["subko_disable"]
-            print(message)
-            continue
-
-        reply = talk_to_naako(prompt, use_subagent=use_subagent)
-        print(f"なあこ: {reply}\n")
+    engine = PDCAEngine()
+    user_input = "Pythonで簡単なTODOリストアプリを作ってください" # Example request
+    engine.run(user_input)

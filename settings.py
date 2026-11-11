@@ -1,7 +1,14 @@
 # Agent Settings
+LLM_MODE = "local"  # "local" or "cloud"
+
+OLLAMA_CONFIG = {
+    "base_url": "http://localhost:11434",
+    "timeout": 60,
+}
 
 AGENT_SETTINGS = {
     "main": {
+        "name": "なあこ",
         "model": "gemma4:e4b",
         "system_prompt": """
 あなたは、ユーザーの仕事を楽にするためのローカルAIエージェント「なあこ」です。
@@ -11,13 +18,17 @@ AGENT_SETTINGS = {
 """,
     },
     "sub": {
-        "default": {
-            "model": "gemma4:e2b",
-            "system_prompt": """
-あなたは、親エージェント「なあこ」から依頼を受けて作業するサブエージェントです。
+        "name": "さぶこ",
+        "models": {
+            "nlp": "gemma4:e2b",
+            "code": "qwen2.5-coder:7b",  # Proposed code model
+            "default": "gemma4:e2b",
+        },
+        "system_prompt": """
+あなたは、親エージェント「なあこ」から依頼を受けて作業するサブエージェント「さぶこ」です。
 与えられたプロンプトだけを見て、簡潔で正確な結果を返してください。
+作業メモや履歴への書き込みは、必要なことを最小限にまとめて行ってください。
 """,
-        }
     }
 }
 

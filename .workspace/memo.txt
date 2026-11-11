@@ -1,0 +1,23 @@
+[TODOリストのデータ構造（タスクの形式やリストの定義）を決定する] 完了: タスクの形式:
+- タスク名
+- 説明
+- 期限
+- 状態（未完了/完了）
+
+リストの定義:
+- T...
+[TODOリストを保持するためのリストまたはクラス構造を定義する] 完了: ```python
+class Task:
+    def __init__(self, task_...
+[新しいタスクを受け取り、リストに追加する関数を実装する] 完了: ```python
+class Task:
+    def __init__(self, task_...
+[現在のTODOリスト全体を番号付きで表示する関数を実装する] 完了: ```python
+class Task:
+    def __init__(self, task_...
+[ユーザーが指定した番号のタスクをリストから削除する関数を実装する] 完了: ```python
+class Task:
+    def __init__(self, task_...
+[ユーザーが「追加」「表示」「削除」などを選べるように、アプリケーションのメイン実行ループとメニュー表示を実装する] 完了: ```python
+class Task:
+    def __init__(self, task_...
