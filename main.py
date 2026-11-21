@@ -1,88 +1,96 @@
+import re
+import sys
+
 import settings
 from llm_client import LLMClient
 from workspace_manager import WorkspaceManager
-from agents import NaakoAgent, SabukoAgent
-import re
+from agents import NaakoAgent
+from skills import SkillLoader
 
-class PDCAEngine:
+MAX_STEPS = 10  # 1回の依頼で実行するタスク数の上限
+
+
+class SimpleEngine:
     """
-    The core engine that drives the automated PDCA cycle.
-    Plan -> Do -> Check -> Act.
+    単一ループの実行エンジン。
+    計画 → 実行（スキル対応） → 要約、だけを行う。
     """
     def __init__(self):
         self.llm = LLMClient()
         self.ws = WorkspaceManager()
-        self.naako = NaakoAgent(self.llm, self.ws)
-        self.sabuko = SabukoAgent(self.llm, self.ws)
-        self.max_iterations = 100
+        self.skills = SkillLoader(getattr(settings, "SKILLS_DIR", "skills"))
+        self.naako = NaakoAgent(self.llm, self.ws, self.skills)
 
     def parse_plan(self, plan_text: str):
         """
-        Parses the plan text into a list of executable tasks.
-        Format expected: 1. [Task Name] Description (タイプ: nlp/code)
+        計画テキストをタスクのリストに変換する。
+        形式: 1. [タスク名] 内容 (タイプ: nlp/code) [(スキル: name)]
+        小さいモデルは [タスク名] を落とすことがあるので、括弧なしも許容する。
         """
         tasks = []
-        lines = plan_text.strip().split('\n')
-        for line in lines:
-            match = re.search(r'\d+\.\s+\[(.*?)\]\s+(.*?)\s+\(タイプ:\s*(nlp|code)\)', line)
+        for line in plan_text.strip().split("\n"):
+            match = re.search(
+                r"\d+\.\s+(?:\[(.*?)\]\s+)?(.*?)\s+\(タイプ:\s*(nlp|code)\)"
+                r"(?:\s+\(スキル:\s*([a-z0-9-]+)\))?", line)
             if match:
                 tasks.append({
-                    "name": match.group(1),
+                    "name": match.group(1) or f"タスク{len(tasks) + 1}",
                     "description": match.group(2),
-                    "type": match.group(3)
+                    "type": match.group(3),
+                    "skill": match.group(4),
                 })
         return tasks
 
-    def run(self, user_request: str):
+    def run(self, user_request: str) -> bool:
         print(f"🚀 依頼を受信しました: {user_request}")
-        
-        # Initial Plan
-        print("\n[Plan] なあこが計画を立てています...")
-        plan_text = self.naako.plan_task(user_request)
-        print(f"計画案:\n{plan_text}")
 
-        iteration = 0
-        while iteration < self.max_iterations:
-            iteration += 1
-            print(f"\n--- PDCA サイクル {iteration}回目 ---")
-            
-            tasks = self.parse_plan(self.ws.read("plan.txt"))
-            if not tasks:
-                print("有効なタスクが見つかりませんでした。計画を再策定します。")
-                self.naako.plan_task(user_request)
-                continue
+        print("\n[計画] なあこが計画を立てています...")
+        plan_text = self.naako.plan(user_request)
+        print(f"計画:\n{plan_text}")
 
-            all_success = True
-            for task in tasks:
-                print(f"\n[Do] さぶこがタスク「{task['name']}」を実行中...")
-                result = self.sabuko.execute_task(task['description'], task['type'])
-                print(f"結果: {result[:100]}...")
+        tasks = self.parse_plan(plan_text)
+        if not tasks:
+            # 形式が崩れていたら、厳しめの指示でもう一度だけ計画させる
+            print("⚠️ 計画を読み取れなかったため、形式を厳しくして再計画します。")
+            plan_text = self.naako.plan(user_request, strict=True)
+            print(f"計画:\n{plan_text}")
+            tasks = self.parse_plan(plan_text)
+        if not tasks:
+            print("⚠️ 計画を読み取れませんでした。")
+            return False
+        if len(tasks) > MAX_STEPS:
+            print(f"⚠️ タスクが {len(tasks)} 件あるため、先頭 {MAX_STEPS} 件だけ実行します。")
+            tasks = tasks[:MAX_STEPS]
 
-                print(f"[Check] なあこが結果を評価中...")
-                if self.naako.evaluate_result(task['name'], result):
-                    print("✅ 成功")
-                else:
-                    print("❌ 失敗")
-                    all_success = False
-                    
-                    print(f"[Act] なあこが計画を修正しています...")
-                    # We stop current task list and adjust the plan immediately
-                    self.naako.adjust_plan(task['name'], result)
-                    print(f"修正後の計画:\n{self.ws.read('plan.txt')}")
-                    break # Exit task loop to restart with new plan
-            
-            # Context compression after each cycle to prevent bloat
-            if iteration % 5 == 0 or not all_success:
-                self.naako.compress_context("memo.txt")
-            
-            if all_success:
-                print("\n✨ すべてのタスクが成功しました！")
-                return True
-        
-        print("\n⚠️ 最大試行回数に達しましたが、完了しませんでした。")
-        return False
+        results = []
+        for i, task in enumerate(tasks, 1):
+            skill_note = f" (スキル: {task['skill']})" if task.get("skill") else ""
+            print(f"\n[実行 {i}/{len(tasks)}] 「{task['name']}」{skill_note} を実行中...")
+            result = self.naako.execute(task["description"], task["type"], task.get("skill"))
+            print(f"結果: {result[:100]}...")
+            results.append(result)
+
+        print("\n[報告] なあこがまとめています...")
+        summary = self.naako.summarize(user_request, results)
+        print(f"\n✨ 完了報告:\n{summary}")
+        return True
+
 
 if __name__ == "__main__":
-    engine = PDCAEngine()
-    user_input = "Pythonで簡単なTODOリストアプリを作ってください" # Example request
-    engine.run(user_input)
+    engine = SimpleEngine()
+    if len(sys.argv) > 1:
+        # 引数があれば1回だけ実行: python main.py "依頼文"
+        engine.run(" ".join(sys.argv[1:]))
+    else:
+        # 引数なしは対話モード（/bye で終了）
+        print("なあこ: ご依頼をどうぞ（/bye で終了します）")
+        while True:
+            try:
+                user_input = input("あなた: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                break
+            if user_input in ("/bye", "exit", "quit"):
+                print(settings.MESSAGES["exit"])
+                break
+            if user_input:
+                engine.run(user_input)
