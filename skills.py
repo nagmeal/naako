@@ -48,6 +48,11 @@ class Skill:
         self.description = meta.get("description", "")
         # スクリプトへ渡す入力の種類: "task"（既定）= タスク本文 / "plan" = 計画テキスト
         self.input = meta.get("input", "task")
+        # スクリプト実行の制限時間（秒）。長い作業をするスキルは SKILL.md で宣言する
+        try:
+            self.timeout = int(meta.get("timeout", "60"))
+        except ValueError:
+            self.timeout = 0  # scan() で警告して既定値に戻す
         self.body = body.strip()
 
     @property
@@ -91,6 +96,10 @@ class SkillLoader:
                 self.warnings.append(
                     f"{d.name}: input '{skill.input}' が不正なので task として扱います")
                 skill.input = "task"
+            if not (5 <= skill.timeout <= 1800):
+                self.warnings.append(
+                    f"{d.name}: timeout '{meta.get('timeout')}' が不正なので 60 として扱います")
+                skill.timeout = 60
             self.skills[skill.name] = skill
 
     def catalog_text(self) -> str:
@@ -107,10 +116,11 @@ class SkillLoader:
         return s.body if s else ""
 
     def run_script(self, name: str, input_text: str,
-                   timeout: int = 60) -> tuple[int, str]:
+                   timeout: int | None = None) -> tuple[int, str]:
         """段階3: scripts/run.py を標準入力つきで実行する。
 
         実行はスキルのフォルダを作業ディレクトリにして閉じる。
+        制限時間は SKILL.md の timeout 宣言（既定60秒）を使う。
         戻り値: (終了コード, 標準出力＋標準エラー末尾)
         """
         s = self.skills.get(name)
@@ -118,6 +128,8 @@ class SkillLoader:
             return -1, f"skill not found: {name}"
         if s.script is None:
             return -1, f"skill has no scripts/run.py: {name}"
+        if timeout is None:
+            timeout = s.timeout
         try:
             proc = subprocess.run(
                 [sys.executable, str(s.script)],
