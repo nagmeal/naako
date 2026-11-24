@@ -44,6 +44,9 @@ class SimpleEngine:
     def run(self, user_request: str) -> bool:
         print(f"🚀 依頼を受信しました: {user_request}")
 
+        # 実行ごとにメモを区切る（前回のメモは archive/ に退避）
+        self.ws.rotate_memo(user_request)
+
         print("\n[計画] なあこが計画を立てています...")
         plan_text = self.naako.plan(user_request)
         print(f"計画:\n{plan_text}")
