@@ -15,10 +15,11 @@ class SimpleEngine:
     単一ループの実行エンジン。
     計画 → 実行（スキル対応） → 要約、だけを行う。
     """
-    def __init__(self):
+    def __init__(self, excluded_skills=None):
         self.llm = LLMClient()
         self.ws = WorkspaceManager()
-        self.skills = SkillLoader(getattr(settings, "SKILLS_DIR", "skills"))
+        self.skills = SkillLoader(getattr(settings, "SKILLS_DIR", "skills"),
+                                  exclude=set(excluded_skills or ()))
         self.naako = NaakoAgent(self.llm, self.ws, self.skills)
 
     def parse_plan(self, plan_text: str):
@@ -41,7 +42,8 @@ class SimpleEngine:
                 })
         return tasks
 
-    def run(self, user_request: str) -> bool:
+    def run(self, user_request: str) -> str | None:
+        """依頼を1件実行し、最終報告の文字列を返す（失敗時は None）。"""
         print(f"🚀 依頼を受信しました: {user_request}")
 
         # 実行ごとにメモを区切る（前回のメモは archive/ に退避）
@@ -60,7 +62,7 @@ class SimpleEngine:
             tasks = self.parse_plan(plan_text)
         if not tasks:
             print("⚠️ 計画を読み取れませんでした。")
-            return False
+            return None
         if len(tasks) > MAX_STEPS:
             print(f"⚠️ タスクが {len(tasks)} 件あるため、先頭 {MAX_STEPS} 件だけ実行します。")
             tasks = tasks[:MAX_STEPS]
@@ -79,7 +81,7 @@ class SimpleEngine:
         print("\n[報告] なあこがまとめています...")
         summary = self.naako.summarize(user_request, results)
         print(f"\n✨ 完了報告:\n{summary}")
-        return True
+        return summary
 
 
 if __name__ == "__main__":

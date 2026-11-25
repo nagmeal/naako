@@ -72,6 +72,21 @@ class NaakoAgent:
         # タスクを1件実行し、結果を台帳に記録して返す。
         # スクリプトを持つスキルでは、台帳の「出力」はスクリプトの生出力
         # （検証可能な事実）とし、モデルの文章は「補足」に分ける。
+        if (skill_name and self.skills
+                and skill_name in getattr(self.skills, "excluded", set())):
+            # 封印スキル（APIモードの code-agent 等）は実行せず台帳に残す
+            entry = {
+                "name": task_name or task_description,
+                "skill": skill_name,
+                "status": "error",
+                "output": f"スキル '{skill_name}' はこのモードでは封印されています。",
+                "note": "",
+            }
+            self.ledger.append(entry)
+            self._save_ledger()
+            self.ws.append("memo.txt",
+                           f"[{task_description}] 封印スキルのため未実行: {skill_name}")
+            return entry
         skill_block = ""
         script_result = None
         if skill_name and self.skills:

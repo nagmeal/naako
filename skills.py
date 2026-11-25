@@ -65,8 +65,12 @@ class Skill:
 
 
 class SkillLoader:
-    def __init__(self, skills_dir: str | Path = "skills"):
+    def __init__(self, skills_dir: str | Path = "skills",
+                 exclude: set[str] | None = None):
         self.skills_dir = Path(skills_dir)
+        # 除外リスト（APIモードで code-agent を封印する等）。
+        # カタログに出さないだけでなく、名前を覚えておき封印判定に使う。
+        self.excluded: set[str] = set(exclude or ())
         self.skills: dict[str, Skill] = {}
         self.warnings: list[str] = []
         self.scan()
@@ -79,6 +83,8 @@ class SkillLoader:
         for d in sorted(self.skills_dir.iterdir()):
             md = d / "SKILL.md"
             if not d.is_dir() or not md.is_file():
+                continue
+            if d.name in self.excluded:
                 continue
             meta, body = _parse_frontmatter(md.read_text(encoding="utf-8"))
             skill = Skill(d, meta, body)
