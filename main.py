@@ -69,9 +69,12 @@ class SimpleEngine:
         for i, task in enumerate(tasks, 1):
             skill_note = f" (スキル: {task['skill']})" if task.get("skill") else ""
             print(f"\n[実行 {i}/{len(tasks)}] 「{task['name']}」{skill_note} を実行中...")
-            result = self.naako.execute(task["description"], task["type"], task.get("skill"))
-            print(f"結果: {result[:100]}...")
-            results.append(result)
+            entry = self.naako.execute(task["description"], task["type"],
+                                       task.get("skill"), task["name"])
+            print(f"結果: {entry['output'][:100]}...")
+            if entry["status"] == "error":
+                print("⚠️ このタスクはエラーで終わりました（結果台帳に記録済み）。")
+            results.append(entry)
 
         print("\n[報告] なあこがまとめています...")
         summary = self.naako.summarize(user_request, results)

@@ -46,25 +46,29 @@ class WorkspaceManager:
         self.write(filename, "")
 
     def rotate_memo(self, request: str = ""):
-        """前回の実行メモを archive/ に退避し、今回用の新しいメモを始める。
+        """前回の実行メモと結果台帳を archive/ に退避し、新しく始める。
 
-        メモは1回の実行（依頼）の中ではタスク間で共有するが、
+        メモと台帳は1回の実行（依頼）の中ではタスク間で共有するが、
         実行をまたいで残すと前回の内容が混ざって混乱の元になるため、
         実行の開始時に区切る。
         """
-        memo_path = self._get_path("memo.txt")
-        if os.path.exists(memo_path) and os.path.getsize(memo_path) > 0:
-            archive_dir = os.path.join(self.workspace_dir, "archive")
-            os.makedirs(archive_dir, exist_ok=True)
-            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            dest = os.path.join(archive_dir, f"memo-{stamp}.txt")
-            n = 1
-            while os.path.exists(dest):
-                n += 1
-                dest = os.path.join(archive_dir, f"memo-{stamp}-{n}.txt")
-            os.rename(memo_path, dest)
+        stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        archive_dir = os.path.join(self.workspace_dir, "archive")
+        for filename, archived in (("memo.txt", f"memo-{stamp}.txt"),
+                                   ("results.json", f"results-{stamp}.json")):
+            src = self._get_path(filename)
+            if os.path.exists(src) and os.path.getsize(src) > 0:
+                os.makedirs(archive_dir, exist_ok=True)
+                dest = os.path.join(archive_dir, archived)
+                n = 1
+                while os.path.exists(dest):
+                    n += 1
+                    stem, ext = archived.rsplit(".", 1)
+                    dest = os.path.join(archive_dir, f"{stem}-{n}.{ext}")
+                os.rename(src, dest)
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         self.write("memo.txt", f"# 実行メモ（{now} 開始）\n依頼: {request}\n")
+        self.write("results.json", "[]")
 
     def list_files(self):
         """Lists all files currently in the workspace."""

@@ -13,6 +13,9 @@ class NaakoAgent:
         self.ws = workspace
         self.skills = skills
         self.name = settings.AGENT_SETTINGS["main"]["name"]
+        # 結果台帳: 段階どうしの受け渡しはモデルの文章ではなく、
+        # 検証可能な結果（スクリプト出力・終了コード）で行う。
+        self.ledger: List[dict] = []
 
     def plan(self, user_request: str, strict: bool = False) -> str:
         # 依頼を最小タスクに分解し、plan.txt に保存して返す。
@@ -44,14 +47,33 @@ class NaakoAgent:
 """
         plan = self.llm.generate("main", prompt)
         self.ws.write("plan.txt", plan)
+        # 実行の開始で台帳をリセットする（段階の区切り）
+        self.ledger = []
+        self._save_ledger()
         return plan
 
-    def execute(self, task_description: str, task_type: str,
-                skill_name: Optional[str] = None) -> str:
-        # タスクを1件実行する。スキル指定があれば手順とスクリプト結果を取り込む。
-        memo = self.ws.read("memo.txt")
+    def _save_ledger(self) -> None:
+        import json
+        self.ws.write("results.json",
+                      json.dumps(self.ledger, ensure_ascii=False, indent=1))
 
+    def _ledger_context(self) -> str:
+        if not self.ledger:
+            return "（まだ結果はありません）"
+        lines = []
+        for e in self.ledger:
+            lines.append(
+                f"- [{e['name']}] status={e['status']}\n  出力: {e['output'][:300]}")
+        return "\n".join(lines)
+
+    def execute(self, task_description: str, task_type: str,
+                skill_name: Optional[str] = None,
+                task_name: str = "") -> dict:
+        # タスクを1件実行し、結果を台帳に記録して返す。
+        # スクリプトを持つスキルでは、台帳の「出力」はスクリプトの生出力
+        # （検証可能な事実）とし、モデルの文章は「補足」に分ける。
         skill_block = ""
+        script_result = None
         if skill_name and self.skills:
             body = self.skills.load_body(skill_name)
             if body:
@@ -63,30 +85,64 @@ class NaakoAgent:
                 input_text = task_description
                 if getattr(skill, "input", "task") == "plan":
                     input_text = self.ws.read("plan.txt") or task_description
-                rc, out = self.skills.run_script(skill_name, input_text)
+                script_result = self.skills.run_script(skill_name, input_text)
+                rc, out = script_result
                 skill_block += f"\n\n【スクリプト実行結果 (終了コード {rc})】\n{out}"
 
         prompt = f"""
 以下のタスクを実行してください。
-作業メモの内容を参考にしてください。{skill_block}
+これまでの結果台帳を参考にしてください。{skill_block}
 
 タスク: {task_description}
-作業メモ: {memo}
+結果台帳:
+{self._ledger_context()}
 """
-        result = self.llm.generate("main", prompt)
-        self.ws.append("memo.txt", f"[{task_description}] 完了: {result[:50]}...")
-        return result
+        note = self.llm.generate("main", prompt)
 
-    def summarize(self, user_request: str, results: List[str]) -> str:
-        # 全タスクの結果をもとに最終報告をまとめる。
-        joined = "\n".join(f"- {r[:200]}" for r in results)
+        if script_result is not None:
+            rc, out = script_result
+            entry = {
+                "name": task_name or task_description,
+                "skill": skill_name,
+                "status": "ok" if rc == 0 else "error",
+                "output": out.strip(),
+                "note": note.strip(),
+            }
+        else:
+            entry = {
+                "name": task_name or task_description,
+                "skill": skill_name,
+                "status": "ok",
+                "output": note.strip(),
+                "note": "",
+            }
+        self.ledger.append(entry)
+        self._save_ledger()
+        self.ws.append("memo.txt",
+                       f"[{task_description}] 完了: {entry['output'][:50]}...")
+        return entry
+
+    def summarize(self, user_request: str,
+                  results: Optional[List[dict]] = None) -> str:
+        # 結果台帳をもとに最終報告をまとめる。
+        # 「出力」（事実）を根拠にし、「補足」（実行役の解釈）は参考に留める。
+        entries = results if results is not None else self.ledger
+        lines = []
+        for e in entries:
+            line = f"- [{e['name']}] status={e['status']}\n  出力: {e['output'][:400]}"
+            if e.get("note"):
+                line += f"\n  補足（実行役の解釈）: {e['note'][:200]}"
+            lines.append(line)
+        joined = "\n".join(lines)
         prompt = f"""
-依頼に対する作業が終わりました。各タスクの結果をもとに、最終報告を短くまとめてください。
+依頼に対する作業が終わりました。結果台帳をもとに、最終報告を短くまとめてください。
+「出力」は検証可能な事実、「補足」は実行役の解釈です。報告は出力を根拠にし、
+補足だけにしか無い内容は事実として断定しないでください。
 結果に無い推測はしないでください。
 
 依頼: {user_request}
 
-結果:
+結果台帳:
 {joined}
 """
         return self.llm.generate("main", prompt)
