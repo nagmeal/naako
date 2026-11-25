@@ -61,8 +61,8 @@ class LLMClient:
         - agent_type: 'main' (Naako) or 'sub' (Sabuko)
         - task_type: 'nlp' or 'code' (only relevant for Sabuko)
         """
-        if agent_type == "main":
-            config = self.agent_settings["main"]
+        if agent_type in ("main", "report"):
+            config = self.agent_settings[agent_type]
             model = config["model"]
             system_prompt = config["system_prompt"]
         elif agent_type == "sub":

@@ -145,4 +145,5 @@ class NaakoAgent:
 結果台帳:
 {joined}
 """
-        return self.llm.generate("main", prompt)
+        # 最終報告だけは性格付けありの "report" 設定で生成する
+        return self.llm.generate("report", prompt)
