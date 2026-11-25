@@ -3,7 +3,7 @@ LLM_MODE = "local"  # "local" or "cloud"
 
 OLLAMA_CONFIG = {
     "base_url": "http://localhost:11434",
-    "timeout": 60,
+    "timeout": 600,
 }
 
 AGENT_SETTINGS = {

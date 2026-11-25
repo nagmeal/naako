@@ -25,6 +25,9 @@ class LLMClient:
             "model": model,
             "messages": chat_messages,
             "stream": False,
+            # 思考モードは切る: gemma4 では思考が生成枠を使い切り、
+            # 本文が空になることがあるため（12b 実機で確認済み）
+            "think": False,
             "options": {
                 "temperature": 0.7,
                 "num_predict": 1024,
