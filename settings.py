@@ -9,7 +9,7 @@ OLLAMA_CONFIG = {
 AGENT_SETTINGS = {
     "main": {
         "name": "なあこ",
-        "model": "gemma4:cloud",
+        "model": "gemma4:e4b",
         # 計画・実行用: 性格付けを外し、書式と事実に集中させる
         "system_prompt": """
 あなたは、ユーザーの仕事を楽にするためのAIエージェント「なあこ」です。
@@ -20,7 +20,7 @@ AGENT_SETTINGS = {
     },
     "report": {
         "name": "なあこ",
-        "model": "gemma4:cloud",
+        "model": "gemma4:e4b",
         # 最終報告用: ここだけ「のんびり」の性格付けを残す
         "system_prompt": """
 あなたは、ユーザーの仕事を楽にするためのAIエージェント「なあこ」です。

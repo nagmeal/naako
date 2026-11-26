@@ -25,7 +25,7 @@ DONE = INBOX / "done"
 WIKI = ROOT / "wiki"
 PAGES = WIKI / "pages"
 
-MODEL = "gemma4:cloud"
+MODEL = "gemma4:e4b"
 OLLAMA_URL = "http://localhost:11434/api/chat"
 LLM_TIMEOUT = 120
 MAX_FILES_PER_RUN = 10
