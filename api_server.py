@@ -124,9 +124,15 @@ class Handler(BaseHTTPRequestHandler):
         return self.headers.get("X-Naako-Token") == TOKEN
 
     def do_GET(self):
+        path = urlparse(self.path).path
+        if path == "/":
+            # 簡単な UI（静的 HTML。データ取得は各 API 呼び出しで認証する）
+            p = ROOT / "ui.html"
+            if not p.is_file():
+                return self._send(404, {"error": "ui not found"})
+            return self._send(200, p.read_text(encoding="utf-8"), "text/html")
         if not self._authorized():
             return self._send(401, {"error": "unauthorized"})
-        path = urlparse(self.path).path
         if path == "/health":
             return self._send(200, {
                 "ok": True, "model": API_MODEL,

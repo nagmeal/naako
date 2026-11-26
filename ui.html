@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>なあこ</title>
+<style>
+  body { font-family: sans-serif; max-width: 720px; margin: 0 auto; padding: 16px; color: #222; }
+  h1 { font-size: 1.4em; }
+  h2 { font-size: 1.1em; margin-top: 28px; }
+  textarea { width: 100%; min-height: 64px; box-sizing: border-box; }
+  input[type=text], input[type=password] { width: 100%; box-sizing: border-box; padding: 6px; }
+  button { padding: 8px 16px; margin-top: 8px; }
+  pre { white-space: pre-wrap; word-break: break-word; background: #f6f6f6; padding: 12px; border-radius: 6px; }
+  .meta { color: #666; font-size: 0.85em; }
+  .ok { color: #1a7f37; } .err { color: #b3261e; }
+  ul { padding-left: 20px; }
+  a { cursor: pointer; }
+  #job-list li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<h1>なあこ</h1>
+<p class="meta" id="health">サーバー状態を確認中…</p>
+
+<h2>トークン</h2>
+<input type="password" id="token" placeholder="NAAKO_API_TOKEN">
+<button onclick="saveToken()">保存</button>
+<span class="meta">（ブラウザにだけ保存されます）</span>
+
+<h2>依頼する</h2>
+<textarea id="request" placeholder="例：短い挨拶文を2つ考えて"></textarea><br>
+<button onclick="submitJob()">なあこに頼む</button>
+<p id="job-status" class="meta"></p>
+<pre id="report" hidden></pre>
+<div id="ledger"></div>
+
+<h2>最近のジョブ</h2>
+<ul id="job-list"></ul>
+
+<h2>Wiki</h2>
+<pre id="wiki-index">読み込み中…</pre>
+<div id="wiki-page"></div>
+
+<script>
+const token = () => document.getElementById('token').value;
+function saveToken() {
+  localStorage.setItem('naako_token', token());
+  loadHealth(); loadJobs(); loadWiki();
+}
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token()) headers['X-Naako-Token'] = token();
+  const r = await fetch(path, { ...opts, headers });
+  if (r.status === 401) throw new Error('トークンが違います（401）');
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const ct = r.headers.get('content-type') || '';
+  return ct.includes('application/json') ? r.json() : r.text();
+}
+async function loadHealth() {
+  try {
+    const h = await api('/health');
+    document.getElementById('health').textContent =
+      `モデル: ${h.model} ／ スキル: ${h.skills.join(', ')} ／ 封印: ${h.excluded_skills.join(', ')}`;
+  } catch (e) {
+    document.getElementById('health').textContent = 'サーバーに繋がりません: ' + e.message;
+  }
+}
+let timer = null;
+async function submitJob() {
+  const req = document.getElementById('request').value.trim();
+  if (!req) return;
+  const st = document.getElementById('job-status');
+  const rep = document.getElementById('report');
+  const led = document.getElementById('ledger');
+  rep.hidden = true; led.innerHTML = '';
+  try {
+    const { job_id } = await api('/run', { method: 'POST', body: JSON.stringify({ request: req }) });
+    st.textContent = '実行中…（' + job_id + '）';
+    clearInterval(timer);
+    timer = setInterval(async () => {
+      const j = await api('/jobs/' + job_id);
+      st.textContent = '状態: ' + j.status;
+      if (j.status === 'done' || j.status === 'error') {
+        clearInterval(timer);
+        if (j.report) { rep.textContent = j.report; rep.hidden = false; }
+        if (j.ledger) {
+          led.innerHTML = '<h2>結果台帳</h2>' + j.ledger.map(e =>
+            `<p>[${e.name}] <span class="${e.status === 'ok' ? 'ok' : 'err'}">${e.status}</span><br>${escapeHtml(e.output || '')}</p>`).join('');
+        }
+        if (j.status === 'error') st.textContent = 'エラー: ' + (j.error || '');
+        loadJobs();
+      }
+    }, 2000);
+  } catch (e) { st.textContent = '失敗: ' + e.message; }
+}
+function escapeHtml(s) {
+  return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+async function loadJobs() {
+  try {
+    const jobs = await api('/jobs');
+    document.getElementById('job-list').innerHTML = jobs.slice().reverse().map(j =>
+      `<li><a onclick="showJob('${j.id}')">${escapeHtml(j.request)}</a> — ${j.status}</li>`).join('') || '<li>（なし）</li>';
+  } catch (e) { /* 健康チェックで十分 */ }
+}
+async function showJob(id) {
+  const j = await api('/jobs/' + id);
+  const rep = document.getElementById('report');
+  document.getElementById('job-status').textContent = '状態: ' + j.status;
+  if (j.report) { rep.textContent = j.report; rep.hidden = false; }
+}
+async function loadWiki() {
+  try {
+    const idx = await api('/wiki');
+    const el = document.getElementById('wiki-index');
+    el.textContent = idx;
+    // 目次の (pages/xxx.md) をリンク化する
+    el.innerHTML = escapeHtml(idx).replace(/\(pages\/([a-zA-Z0-9_\-.]+)\.md\)/g,
+      '(<a onclick="loadPage(\'$1\')">pages/$1.md</a>)');
+  } catch (e) {
+    document.getElementById('wiki-index').textContent = 'wiki はまだありません';
+  }
+}
+async function loadPage(slug) {
+  const md = await api('/wiki/pages/' + slug);
+  document.getElementById('wiki-page').innerHTML = '<pre>' + escapeHtml(md) + '</pre>';
+}
+document.getElementById('token').value = localStorage.getItem('naako_token') || '';
+loadHealth(); loadJobs(); loadWiki();
+</script>
+</body>
+</html>
