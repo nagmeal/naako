@@ -1,0 +1,34 @@
+[
+ {
+  "name": "タスク1",
+  "skill": null,
+  "status": "ok",
+  "output": "検索キーワードを決定した。",
+  "note": "",
+  "point": "検索キーワードを決定した。"
+ },
+ {
+  "name": "タスク2",
+  "skill": "web-search",
+  "status": "ok",
+  "output": "検索クエリ: Gemma 4の最新情報を検索する\n上位5件:\n1. Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか - Qiita\n   https://qiita.com/TaichiEndoh/items/0b06c96326e0f41912b1\n   Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか この記事を読むと：Google DeepMindが2026年4月2日にリリースした「Gemma 4」の全体像・技術仕様・応用の可能性がわかります。初心者から上級者\n2. Gemma 4 完全まとめノート（2026年5月6日時点・最新情報反映）\n   https://note.com/zephel01/n/ne02815f4d790\n   Apache 2.0 + マルチモーダル + 高性能 + 爆速の組み合わせは、2026年現在のオープン模型トップクラスです。 最新情報は Hugging Face Gemma 4 Collection で確認を。 一般の人での利用はllam\n3. 【2026年11月最新】Gemma 4とは？性能・アーキテクチャ・使い方を徹底解説｜Claude Codeとの違いも整理\n   https://genai-ai.co.jp/ai-kanri/blog/cc-gemma4-guide/\n   Google DeepMindのオープンウェイトモデルGemma 4の特徴・4つのモデルサイズ・Apache 2.0ライセンス・使い方を解説。非エンジニアが知るべきClaude Codeとの違いまでGENAI実運用データを交えて整理します。\n4. Gemma 4とは？31B・26B A4B・E4Bの必要スペックと使い方【2026年11月】｜カトルセ\n   https://catorce.jp/st/knowledge-gemma4-guide\n   Gemma 4の必要スペックをモデル別の早見表で整理。E2B・E4B・12B・26B A4B・31Bのパラメータ数・読める長さ・4bit／8bit／16bitのメモリ（Googleの公表値）とGPU・Macの目安、Ollama・LM Stu\n5. Gemma 4 — Google DeepMind\n   https://deepmind.google/models/gemma/gemma-4/\n   Gemma 4 models undergo the same rigorous infrastructure security protocols as our proprietary models. By choosing Gemma",
+  "note": "1. Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか - Qiita\n   https://qiita.com/TaichiEndoh/items/0b06c96326e0f41912b1\n   Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか この記事を読むと：Google DeepMindが2026年4月2日にリリースした「Gemma 4」の全体像・技術仕様・応用の可能性がわかります。初心者から上級者\n2. Gemma 4 完全まとめノート（2026年5月6日時点・最新情報反映）\n   https://note.com/zephel01/n/ne02815f4d790\n   Apache 2.0 + マルチモーダル + 高性能 + 爆速の組み合わせは、2026年現在のオープン模型トップクラスです。 最新情報は Hugging Face Gemma 4 Collection で確認を。 一般の人での利用はllam\n3. 【2026年11月最新】Gemma 4とは？性能・アーキテクチャ・使い方を徹底解説｜Claude Codeとの違いも整理\n   https://genai-ai.co.jp/ai-kanri/blog/cc-gemma4-guide/\n   Google DeepMindのオープンウェイトモデルGemma 4の特徴・4つのモデルサイズ・Apache 2.0ライセンス・使い方を解説。非エンジニアが知るべきClaude Codeとの違いまでGENAI実運用データを交えて整理します。\n4. Gemma 4とは？31B・26B A4B・E4Bの必要スペックと使い方【2026年11月】｜カトルセ\n   https://catorce.jp/st/knowledge-gemma4-guide\n   Gemma 4の必要スペックをモデル別の早見表で整理。E2B・E4B・12B・26B A4B・31Bのパラメータ数・読める長さ・4bit／8bit／16bitのメモリ（Googleの公表値）とGPU・Macの目安、Ollama・LM Stu\n5. Gemma 4 — Google DeepMind\n   https://deepmind.google/models/gemma/gemma-4/\n   Gemma 4 models undergo the same rigorous infrastructure security protocols as our proprietary models. By choosing Gemma",
+  "point": "Gemma 4はGoogle DeepMindがリリースしたオープンウェイトモデルであり、2026年時点ではマルチモーダル、高性能、高速な特徴を持つ。"
+ },
+ {
+  "name": "タスク1",
+  "skill": null,
+  "status": "ok",
+  "output": "Gemma 4 最新情報 2026",
+  "note": "",
+  "point": "Gemma 4の最新情報として2026年のデータが利用可能である。"
+ },
+ {
+  "name": "タスク2",
+  "skill": "web-search",
+  "status": "ok",
+  "output": "検索クエリ: Gemma 4の最新情報を検索する\n上位5件:\n1. Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか - Qiita\n   https://qiita.com/TaichiEndoh/items/0b06c96326e0f41912b1\n   Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか この記事を読むと：Google DeepMindが2026年4月2日にリリースした「Gemma 4」の全体像・技術仕様・応用の可能性がわかります。初心者から上級者\n2. Gemma 4 完全まとめノート（2026年5月6日時点・最新情報反映）\n   https://note.com/zephel01/n/ne02815f4d790\n   Apache 2.0 + マルチモーダル + 高性能 + 爆速の組み合わせは、2026年現在のオープン模型トップクラスです。 最新情報は Hugging Face Gemma 4 Collection で確認を。 一般の人での利用はllam\n3. 【2026年11月最新】Gemma 4とは？性能・アーキテクチャ・使い方を徹底解説｜Claude Codeとの違いも整理\n   https://genai-ai.co.jp/ai-kanri/blog/cc-gemma4-guide/\n   Google DeepMindのオープンウェイトモデルGemma 4の特徴・4つのモデルサイズ・Apache 2.0ライセンス・使い方を解説。非エンジニアが知るべきClaude Codeとの違いまでGENAI実運用データを交えて整理します。\n4. Gemma 4とは？31B・26B A4B・E4Bの必要スペックと使い方【2026年11月】｜カトルセ\n   https://catorce.jp/st/knowledge-gemma4-guide\n   Gemma 4の必要スペックをモデル別の早見表で整理。E2B・E4B・12B・26B A4B・31Bのパラメータ数・読める長さ・4bit／8bit／16bitのメモリ（Googleの公表値）とGPU・Macの目安、Ollama・LM Stu\n5. Gemma 4 とは？e4b・26b等のモデル構成と性能【2026年版】\n   https://crystal-method.com/blog/gemma-4/\n   Gemma 4 とは何かを徹底解説。e4b・26bなど全モデル構成やマルチモーダル対応の詳細、パラメータ別スペックと実用上の選び方まで、2026年版として最新情報をわかりやすくまとめています。",
+  "note": "1. Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか - Qiita\n   https://qiita.com/TaichiEndoh/items/0b06c96326e0f41912b1\n   Google DeepMindが2026年4月2日にリリースした「Gemma 4」の全体像・技術仕様・応用の可能性がわかります。\n2. Gemma 4 完全まとめノート（2026年5月6日時点・最新情報反映）\n   https://note.com/zephel01/n/ne02815f4d790\n   Apache 2.0 + マルチモーダル + 高性能 + 爆速の組み合わせは、2026年現在のオープン模型トップクラスです。\n3. 【2026年11月最新】Gemma 4とは？性能・アーキテクチャ・使い方を徹底解説｜Claude Codeとの違いも整理\n   https://genai-ai.co.jp/ai-kanri/blog/cc-gemma4-guide/\n   Google DeepMindのオープンウェイトモデルGemma 4の特徴・4つのモデルサイズ・Apache 2.0ライセンス・使い方を解説します。\n4. Gemma 4とは？31B・26B A4B・E4Bの必要スペックと使い方【2026年11月】｜カトルセ\n   https://catorce.jp/st/knowledge-gemma4-guide\n   Gemma 4の必要スペックをモデル別の早見表で整理し、パラメータ数やメモリ目安を記載しています。\n5. Gemma 4 とは？e4b・26b等のモデル構成と性能【2026年版】\n   https://crystal-method.com/blog/gemma-4/\n   e4b・26bなど全モデル構成やマルチモーダル対応の詳細、パラメータ別スペックと実用上の選び方を解説しています。",
+  "point": "Gemma 4はGoogle DeepMindがリリースしたオープンウェイトモデルで、2026年4月以降、マルチモーダル対応や複数のモデルサイズ（例：e4b, 26b, 31B）が特徴付けられている。"
+ }
+]

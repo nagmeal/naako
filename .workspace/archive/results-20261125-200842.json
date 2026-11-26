@@ -1,0 +1,30 @@
+[
+ {
+  "name": "資料リスト取得",
+  "skill": "code-agent",
+  "status": "ok",
+  "output": "`docs-inbox` 内のファイル一覧は以下の通りです：\n\n- broken.xlsx\n- dummy.pdf\n- meeting-memo.txt\n- plan.pptx\n- tasks.xlsx\n\n[code-agent] turns=2 cost_usd=0.050148",
+  "note": "docs-inbox内のファイル一覧：\n- broken.xlsx\n- dummy.pdf\n- meeting-memo.txt\n- plan.pptx\n- tasks.xlsx"
+ },
+ {
+  "name": "wiki取込",
+  "skill": "wiki-ingest",
+  "status": "ok",
+  "output": "取り込み完了: 3件\n- ページ作成: wiki\\pages\\meeting-memo.md（元: meeting-memo.txt）\n- ページ作成: wiki\\pages\\plan.md（元: plan.pptx）\n- ページ作成: wiki\\pages\\tasks.md（元: tasks.xlsx）\nアラート: 2件\n- broken.xlsx: 抽出に失敗しました（BadZipFile）\n- dummy.pdf: 対象外の形式です",
+  "note": "取り込み完了: 3件\n- ページ作成: wiki\\pages\\meeting-memo.md（元: meeting-memo.txt）\n- ページ作成: wiki\\pages\\plan.md（元: plan.pptx）\n- ページ作成: wiki\\pages\\tasks.md（元: tasks.xlsx）\nアラート: 2件\n- broken.xlsx: 抽出に失敗しました（BadZipFile）\n- dummy.pdf: 対象外の形式です"
+ },
+ {
+  "name": "完了確認",
+  "skill": null,
+  "status": "ok",
+  "output": "取込結果：\n- 完了：3件（meeting-memo.md, plan.md, tasks.md）\n- アラート：2件（broken.xlsx: 抽出失敗, dummy.pdf: 対象外形式）",
+  "note": ""
+ },
+ {
+  "name": "計画検証",
+  "skill": "plan-lint",
+  "status": "ok",
+  "output": "L1: OK [資料リスト取得] type=code skill=code-agent\nL2: OK [wiki取込] type=nlp skill=wiki-ingest\nL3: OK [完了確認] type=nlp\nL4: OK [計画検証] type=nlp skill=plan-lint\nsummary: ok=4 ng=0 warn=0",
+  "note": "計画テキストの書式検証を完了しました。全4行すべてOKであり、NGおよびWARNはありませんでした。"
+ }
+]

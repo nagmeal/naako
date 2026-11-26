@@ -55,7 +55,8 @@ class WorkspaceManager:
         stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         archive_dir = os.path.join(self.workspace_dir, "archive")
         for filename, archived in (("memo.txt", f"memo-{stamp}.txt"),
-                                   ("results.json", f"results-{stamp}.json")):
+                                   ("results.json", f"results-{stamp}.json"),
+                                   ("points.json", f"points-{stamp}.json")):
             src = self._get_path(filename)
             if os.path.exists(src) and os.path.getsize(src) > 0:
                 os.makedirs(archive_dir, exist_ok=True)
@@ -69,6 +70,7 @@ class WorkspaceManager:
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         self.write("memo.txt", f"# 実行メモ（{now} 開始）\n依頼: {request}\n")
         self.write("results.json", "[]")
+        self.write("points.json", "[]")
 
     def list_files(self):
         """Lists all files currently in the workspace."""

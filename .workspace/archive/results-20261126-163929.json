@@ -1,0 +1,23 @@
+[
+ {
+  "name": "タスク1",
+  "skill": null,
+  "status": "ok",
+  "output": "挨拶文の要件を定義する。",
+  "note": ""
+ },
+ {
+  "name": "タスク2",
+  "skill": null,
+  "status": "ok",
+  "output": "挨拶文を作成しました。",
+  "note": ""
+ },
+ {
+  "name": "タスク3",
+  "skill": null,
+  "status": "ok",
+  "output": "短い挨拶文を二つ目作成しました。",
+  "note": ""
+ }
+]

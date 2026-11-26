@@ -1,0 +1,10 @@
+# 実行メモ（2026-11-25 20:08 開始）
+依頼: docs-inboxの資料をwikiに取り込んで
+[docs-inbox内の資料一覧を取得する] 完了: `docs-inbox` 内の資料一覧は以下の通りです。
+
+- `tasks.xlsx`
+- `do...
+[抽出した各資料をwikiに取り込む] 完了: 取り込み完了: 1件
+- ページ作成: wiki\pages\tasks.md（元: tasks.x...
+[作成した計画の書式をチェックする] 完了: L1: OK [資料リスト抽出] type=code skill=code-agent
+L2: OK...

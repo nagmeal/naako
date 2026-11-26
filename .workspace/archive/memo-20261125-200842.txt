@@ -1,0 +1,13 @@
+# 実行メモ（2026-11-25 20:02 開始）
+依頼: docs-inboxの資料をwikiに取り込んで
+[docs-inbox内のファイル一覧を出す] 完了: `docs-inbox` 内のファイル一覧は以下の通りです：
+
+- broken.xlsx
+- du...
+[リストの資料をwikiに取り込む] 完了: 取り込み完了: 3件
+- ページ作成: wiki\pages\meeting-memo.md（元: ...
+[取込結果を確認する] 完了: 取込結果：
+- 完了：3件（meeting-memo.md, plan.md, tasks.md）
+...
+[計画テキストの書式を確認する] 完了: L1: OK [資料リスト取得] type=code skill=code-agent
+L2: OK...

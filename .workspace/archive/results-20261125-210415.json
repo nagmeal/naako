@@ -1,0 +1,16 @@
+[
+ {
+  "name": "タスク1",
+  "skill": null,
+  "status": "ok",
+  "output": "「こんにちは。」\n「おはようございます。」\n「お疲れ様です。」",
+  "note": ""
+ },
+ {
+  "name": "タスク2",
+  "skill": null,
+  "status": "ok",
+  "output": "どうも。",
+  "note": ""
+ }
+]

@@ -42,6 +42,20 @@ class SimpleEngine:
                 })
         return tasks
 
+    def _run_tasks(self, tasks, results) -> None:
+        """タスクのリストを実行し、結果台帳のエントリを results に追加する。"""
+        for task in tasks:
+            i = len(results) + 1
+            skill_note = f" (スキル: {task['skill']})" if task.get("skill") else ""
+            print(f"\n[実行 {i}] 「{task['name']}」{skill_note} を実行中...")
+            entry = self.naako.execute(task["description"], task["type"],
+                                       task.get("skill"), task["name"])
+            print(f"結果: {entry['output'][:100]}...")
+            print(f"要点: {entry.get('point', '')}")
+            if entry["status"] == "error":
+                print("⚠️ このタスクはエラーで終わりました（結果台帳に記録済み）。")
+            results.append(entry)
+
     def run(self, user_request: str) -> str | None:
         """依頼を1件実行し、最終報告の文字列を返す（失敗時は None）。"""
         print(f"🚀 依頼を受信しました: {user_request}")
@@ -68,15 +82,21 @@ class SimpleEngine:
             tasks = tasks[:MAX_STEPS]
 
         results = []
-        for i, task in enumerate(tasks, 1):
-            skill_note = f" (スキル: {task['skill']})" if task.get("skill") else ""
-            print(f"\n[実行 {i}/{len(tasks)}] 「{task['name']}」{skill_note} を実行中...")
-            entry = self.naako.execute(task["description"], task["type"],
-                                       task.get("skill"), task["name"])
-            print(f"結果: {entry['output'][:100]}...")
-            if entry["status"] == "error":
-                print("⚠️ このタスクはエラーで終わりました（結果台帳に記録済み）。")
-            results.append(entry)
+        self._run_tasks(tasks, results)
+
+        # 最終チェック: 最初の目標を達成したか照合する。
+        # 未達なら台帳の詳細を見返し、残りステップでもう1周だけ計画し直す。
+        achieved, missing = self.naako.check_goal(results)
+        if not achieved:
+            print(f"⚠️ 目標チェック: 未達の可能性があります（{missing}）")
+            if len(results) < MAX_STEPS:
+                print("不足分だけ再計画します。")
+                retry_text = self.naako.plan(
+                    f"{user_request}（前回の不足: {missing}）", reset=False)
+                retry_tasks = self.parse_plan(retry_text)
+                room = MAX_STEPS - len(results)
+                if retry_tasks:
+                    self._run_tasks(retry_tasks[:room], results)
 
         print("\n[報告] なあこがまとめています...")
         summary = self.naako.summarize(user_request, results)

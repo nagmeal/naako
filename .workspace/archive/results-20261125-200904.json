@@ -1,0 +1,23 @@
+[
+ {
+  "name": "資料リスト抽出",
+  "skill": "code-agent",
+  "status": "ok",
+  "output": "`docs-inbox` 内の資料一覧は以下の通りです。\n\n- `tasks.xlsx`\n- `done/` (ディレクトリ)\n\n[code-agent] turns=2 cost_usd=0.050008",
+  "note": "docs-inbox内の資料一覧：tasks.xlsx, done/ (ディレクトリ)"
+ },
+ {
+  "name": "資料取り込み",
+  "skill": "wiki-ingest",
+  "status": "ok",
+  "output": "取り込み完了: 1件\n- ページ作成: wiki\\pages\\tasks.md（元: tasks.xlsx）",
+  "note": "取り込み完了: 1件\n- ページ作成: wiki\\pages\\tasks.md（元: tasks.xlsx）"
+ },
+ {
+  "name": "書式確認",
+  "skill": "plan-lint",
+  "status": "ok",
+  "output": "L1: OK [資料リスト抽出] type=code skill=code-agent\nL2: OK [資料取り込み] type=nlp skill=wiki-ingest\nL3: OK [書式確認] type=nlp skill=plan-lint\nsummary: ok=3 ng=0 warn=0",
+  "note": "【実行結果】\n書式チェック完了。全3行 OK。NGおよびWARNはありません。"
+ }
+]

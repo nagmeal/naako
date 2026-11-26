@@ -1,0 +1,30 @@
+[
+ {
+  "name": "検索",
+  "skill": "web-search",
+  "status": "ok",
+  "output": "検索クエリ: Gemma 4の最新情報を検索する\n上位5件:\n1. Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか - Qiita\n   https://qiita.com/TaichiEndoh/items/0b06c96326e0f41912b1\n   Gemma 4 徹底解説：Googleのオープンモデル最新版で何ができるのか この記事を読むと：Google DeepMindが2026年4月2日にリリースした「Gemma 4」の全体像・技術仕様・応用の可能性がわかります。初心者から上級者\n2. 【2026年11月最新】Gemma 4とは？性能・アーキテクチャ・使い方を徹底解説｜Claude Codeとの違いも整理\n   https://genai-ai.co.jp/ai-kanri/blog/cc-gemma4-guide/\n   Google DeepMindのオープンウェイトモデルGemma 4の特徴・4つのモデルサイズ・Apache 2.0ライセンス・使い方を解説。非エンジニアが知るべきClaude Codeとの違いまでGENAI実運用データを交えて整理します。\n3. 【Gemma 4】スマートフォンでも動作するGoogleの最強オープンモデルの性能・使い方・活用シーンまでを徹底解説 | WEEL\n   https://weel.co.jp/media/tech/gemma-4/\n   商用利用のハードルが一気に下がり、企業・個人を問わず誰でも自由に使えるようになっています。 そこで本記事では、Gemma 4の概要からアーキテクチャ、性能、具体的な使い方、業界別・課題別の活用シーンまで、徹底的に解説していきます。\n4. Gemma 4 完全まとめノート（2026年5月6日時点・最新情報反映）\n   https://note.com/zephel01/n/ne02815f4d790\n   Apache 2.0 + マルチモーダル + 高性能 + 爆速の組み合わせは、2026年現在のオープン模型トップクラスです。 最新情報は Hugging Face Gemma 4 Collection で確認を。 一般の人での利用はllam\n5. 【Gemma 4】Google最新AIモデル全4種を徹底解説!VRAM要件とベンチマークまとめ\n   https://note.com/seal309midorin/n/n18babce9124c\n   💬 モバイルからワークステーションまで、あらゆる環境で動く次世代AIモデル 2026年4月2日、GoogleがオープンソースAIモデルの新世代「Gemma 4」を発表しました🔥 今回は、Gemma 4の全4モデル（E2B / E4B / 2",
+  "note": "のんびりとお調べしました。\n\nGemma 4は、Google DeepMindが2026年4月2日にリリースしたオープンウェイトモデルです。Apache 2.0ライセンスで提供され、全4種類のモデルサイズがあり、モバイルからワークステーションまで動作します。\n\n出典：\n- https://qiita.com/TaichiEndoh/items/0b06c96326e0f41912b1\n- https://genai-ai.co.jp/ai-kanri/blog/cc-gemma4-guide/\n- https://weel.co.jp/media/tech/gemma-4/\n- https://note.com/zephel01/n/ne02815f4d790\n- https://note.com/seal309midorin/n/n18babce9124c"
+ },
+ {
+  "name": "抽出",
+  "skill": null,
+  "status": "ok",
+  "output": "のんびり準備して、情報を抜き出しました。\n\n・リリース日：2026年4月2日\n・開発元：Google DeepMind\n・概要：Googleのオープンモデル最新版",
+  "note": ""
+ },
+ {
+  "name": "要約",
+  "skill": null,
+  "status": "ok",
+  "output": "のんびりまとめました。\n\nGoogle DeepMindが2026年4月2日にリリースした、Googleのオープンモデル最新版です。",
+  "note": ""
+ },
+ {
+  "name": "検証",
+  "skill": "plan-lint",
+  "status": "ok",
+  "output": "L3: OK [検索] type=nlp skill=web-search\nL4: OK [抽出] type=nlp\nL5: OK [要約] type=nlp\nL6: OK [検証] type=nlp skill=plan-lint\nsummary: ok=4 ng=0 warn=0",
+  "note": "のんびりとお調べしました。\n\n計画の書式を確認したところ、NGおよびWARNはなく、すべてOKでした。"
+ }
+]

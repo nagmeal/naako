@@ -1,0 +1,16 @@
+[
+ {
+  "name": "案作成1",
+  "skill": null,
+  "status": "ok",
+  "output": "こんにちは。よろしくお願いします。",
+  "note": ""
+ },
+ {
+  "name": "案作成2",
+  "skill": null,
+  "status": "ok",
+  "output": "[案作成2] status=ok\n出力: はじめまして。どうぞよろしくお願いいたします。",
+  "note": ""
+ }
+]
