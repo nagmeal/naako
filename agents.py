@@ -256,12 +256,56 @@ class NaakoAgent:
         self._save_points()
         self.ledger.append(entry)
         self._save_ledger()
+        self._append_draft(entry)
         self.ws.append("memo.txt",
                        f"[{task_description}] 完了: {entry['output'][:50]}...")
         return entry
 
+    def _append_draft(self, entry: dict) -> None:
+        """成果物の下書きに、この段階の書き足しを追記する。
+
+        最終成果物は「最後に一気に生成するもの」ではなく、各段階が
+        少しずつ書き足してきた蓄積として作る（下書きはディスクに置く
+        ので、1回の生成量に縛られず大きくできる）。
+        """
+        if entry.get("status") == "error":
+            body = "（このタスクはエラーで終了しました）"
+        else:
+            body = (entry.get("output") or "").strip()[:4000]
+        if not body:
+            return
+        self.ws.append("draft.md", f"\n## {entry.get('name', 'タスク')}\n{body}\n")
+
+    def _draft_body(self) -> str:
+        """下書きの本文（ヘッダ行を除いた書き足し部分）を返す。"""
+        raw = self.ws.read("draft.md")
+        lines = raw.splitlines()
+        while lines and (lines[0].startswith("# 成果物下書き")
+                         or lines[0].startswith("依頼:")):
+            lines.pop(0)
+        return "\n".join(lines).strip()
+
     def summarize(self, user_request: str,
                   results: Optional[List[dict]] = None) -> str:
+        # 成果物は下書きの蓄積を「提出」する形を基本にする。
+        # 報告役の仕事は全文の生成ではなく、導入を書いて提出すること。
+        # 下書きが無い場合だけ、従来どおり台帳から生成する。
+        draft = self._draft_body()
+        if draft:
+            points = "\n".join(f"- {p}" for p in self.points) or "（要点なし）"
+            prompt = f"""
+依頼に対する作業が終わりました。最終報告の導入だけを書いてください。
+本文（各段階が書き足した成果物）はこの後にそのまま続きます。
+導入は3〜5行で、要点をもとに何ができたかを伝えてください。
+本文の内容を繰り返さないでください。要点に無い事実は書かないでください。
+
+依頼: {user_request}
+
+要点:
+{points}
+"""
+            intro = self.llm.generate("report", prompt)
+            return f"{intro.strip()}\n\n---\n\n{draft}"
         # 結果台帳をもとに最終報告をまとめる。
         # 「出力」（事実）を根拠にし、「補足」（実行役の解釈）は参考に留める。
         entries = results if results is not None else self.ledger
