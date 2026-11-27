@@ -7,6 +7,7 @@ from typing import List, Optional
 
 POINT_MAX_CHARS = 100  # 要点1つの最大文字数
 POINTS_MAX = 10        # 保持する要点の最大件数
+LOW_TEMP = 0.1         # 圧縮・検証・照合など「決める」仕事の温度
 
 
 # なあこ（単一エージェント版）
@@ -125,7 +126,7 @@ class NaakoAgent:
 
 出力形式: 作り話の行が無ければ「OK」とだけ書いてください。ある場合は、作り話の行を、出力の文面そのままで1行ずつ列挙してください。説明は書かないでください。"""
         try:
-            text = self.llm.generate("main", prompt)
+            text = self.llm.generate("main", prompt, temperature=LOW_TEMP)
         except Exception:
             return output, 0
         text = (text or "").strip()
@@ -180,7 +181,7 @@ class NaakoAgent:
 結果:
 {output[:1200]}"""
         try:
-            text = self.llm.generate("main", prompt)
+            text = self.llm.generate("main", prompt, temperature=LOW_TEMP)
         except Exception:
             text = ""
         for line in (text or "").splitlines():
@@ -204,7 +205,7 @@ class NaakoAgent:
 選んだ要点をそのままの文で、1行に1つずつ出力してください。
 新しい文を作らないでください。"""
         try:
-            text = self.llm.generate("main", prompt)
+            text = self.llm.generate("main", prompt, temperature=LOW_TEMP)
         except Exception:
             text = ""
         kept = []
@@ -241,7 +242,7 @@ class NaakoAgent:
 達成: はい、または いいえ
 不足: （未達の場合だけ、何が足りないかを1行で）"""
         try:
-            text = self.llm.generate("main", prompt)
+            text = self.llm.generate("main", prompt, temperature=LOW_TEMP)
         except Exception:
             return True, ""
         import re

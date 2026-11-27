@@ -13,7 +13,7 @@ class LLMClient:
         self.ollama_config = settings.OLLAMA_CONFIG
         self.agent_settings = settings.AGENT_SETTINGS
 
-    def _get_ollama_payload(self, model: str, system_prompt: str, user_prompt: str, messages: Optional[List[Dict[str, str]]] = None):
+    def _get_ollama_payload(self, model: str, system_prompt: str, user_prompt: str, messages: Optional[List[Dict[str, str]]] = None, temperature: Optional[float] = None):
         """Constructs the payload for Ollama's generate/chat API."""
         # Using the /api/chat endpoint for better conversation management
         chat_messages = [{"role": "system", "content": system_prompt}]
@@ -29,15 +29,17 @@ class LLMClient:
             # 本文が空になることがあるため（12b 実機で確認済み）
             "think": False,
             "options": {
-                "temperature": 0.7,
+                # 温度は呼び出し側で指定できる（圧縮・検証など決定的に
+                # したい仕事は低温）。未指定なら従来どおり 0.7。
+                "temperature": 0.7 if temperature is None else temperature,
                 "num_predict": 1024,
             }
         }
 
-    def call_local(self, model: str, system_prompt: str, user_prompt: str, messages: Optional[List[Dict[str, str]]] = None) -> str:
+    def call_local(self, model: str, system_prompt: str, user_prompt: str, messages: Optional[List[Dict[str, str]]] = None, temperature: Optional[float] = None) -> str:
         """Calls a local model via Ollama."""
         url = f"{self.ollama_config['base_url']}/api/chat"
-        payload = self._get_ollama_payload(model, system_prompt, user_prompt, messages)
+        payload = self._get_ollama_payload(model, system_prompt, user_prompt, messages, temperature)
         
         try:
             response = requests.post(
@@ -58,7 +60,7 @@ class LLMClient:
         """
         return f"[Cloud Mode Simulation] Model {model} would be called here. User prompt: {user_prompt}"
 
-    def generate(self, agent_type: str, user_prompt: str, task_type: Optional[str] = None, messages: Optional[List[Dict[str, str]]] = None) -> str:
+    def generate(self, agent_type: str, user_prompt: str, task_type: Optional[str] = None, messages: Optional[List[Dict[str, str]]] = None, temperature: Optional[float] = None) -> str:
         """
         High-level method to generate a response based on agent type and task.
         - agent_type: 'main' (Naako) or 'sub' (Sabuko)
@@ -80,7 +82,7 @@ class LLMClient:
             raise ValueError(f"Unknown agent_type: {agent_type}")
 
         if self.mode == "local":
-            return self.call_local(model, system_prompt, user_prompt, messages)
+            return self.call_local(model, system_prompt, user_prompt, messages, temperature)
         else:
             return self.call_cloud(model, system_prompt, user_prompt, messages)
 
