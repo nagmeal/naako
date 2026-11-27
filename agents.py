@@ -85,13 +85,83 @@ class NaakoAgent:
             lines.append("これまでの要点: （まだありません）")
         return "\n".join(lines)
 
+    def verify_output(self, task_description: str, entry: dict) -> tuple:
+        """文章タスクの出力から、裏付けのない主張の行を取り除く。
+
+        スクリプト系の出力はハーネスが作る事実なので対象外（呼び出し側で
+        振り分ける）。成果物の本文（作ることが依頼された文章そのもの）は
+        常に残し、行為・出典などの主張で台帳と要点に裏付けがない行だけを
+        除く。検証が失敗したら原文のまま通す（フェイルオープン）。
+        戻り値: (検証済み本文, 除いた行数)
+        """
+        output = (entry.get("output") or "").strip()
+        if not output:
+            return output, 0
+        facts = []
+        for e in self.ledger:
+            if e.get("skill") and e.get("status") == "ok":
+                facts.append(f"- [{e['name']}] {e['output'][:400]}")
+        facts += [f"- 要点: {p}" for p in self.points]
+        facts_text = "\n".join(facts) if facts else "（まだ事実はありません）"
+        prompt = f"""あなたは成果物の検証役です。タスクの出力から「作り話の行」だけを特定してください。
+
+大原則（絶対の事実）:
+- このタスクの実行役は、文章を作ることしかできません。検索・取得・アクセス・ダウンロード・ファイル操作などの外部への行為は、一切していません。
+- それなのに外部への行為を「した」と書いている行は、すべて作り話です。例外はありません。
+- 調べた結果として具体的な情報源や数値を挙げている行も、この実行役には裏付けが無いので作り話です。
+- ただし、下の「分かっている事実」に書かれている内容を言い換えた行は、裏付けがあるので残してください。
+
+残す行:
+- 成果物の本文（依頼されて作った文章・案・リスト・クエリそのもの）
+- 意見・提案・一般的な説明
+
+タスク: {task_description}
+
+分かっている事実（結果台帳と要点）:
+{facts_text}
+
+出力:
+{output[:2000]}
+
+出力形式: 作り話の行が無ければ「OK」とだけ書いてください。ある場合は、作り話の行を、出力の文面そのままで1行ずつ列挙してください。説明は書かないでください。"""
+        try:
+            text = self.llm.generate("main", prompt)
+        except Exception:
+            return output, 0
+        text = (text or "").strip()
+        if not text or text == "OK" or text.startswith("Error calling"):
+            return output, 0
+
+        def norm(s: str) -> str:
+            return s.strip().lstrip("-*・ ").strip()
+
+        targets = [norm(l) for l in text.splitlines() if norm(l)]
+        kept, removed = [], 0
+        for line in output.splitlines():
+            n = norm(line)
+            hit = bool(n) and any(
+                n == t or (len(t) >= 10 and t in n) or (len(n) >= 10 and n in t)
+                for t in targets)
+            if hit:
+                removed += 1
+            else:
+                kept.append(line)
+        if removed == 0:
+            return output, 0
+        return "\n".join(kept).strip(), removed
+
     def compress_point(self, entry: dict) -> str:
         """タスク結果を要点1つ（100字以内）に圧縮する専用呼び出し。
 
         「やる」と「要点に残す」を分けるための独立したワンショット。
         失敗したら決定的フォールバック（出力の先頭行を100字で切る）。
+        圧縮の入力は検証済み本文（あれば）を優先し、作り話を要点に
+        混ぜない。
         """
-        output = (entry.get("output") or "").strip()
+        output = entry.get("verified_output")
+        if output is None:
+            output = entry.get("output") or ""
+        output = output.strip()
         fallback = ""
         for line in output.splitlines():
             if line.strip():
@@ -248,8 +318,18 @@ class NaakoAgent:
                 "output": note.strip(),
                 "note": "",
             }
+        # 文章タスクの出力は、書き足しと圧縮の前に裏付けを検証する
+        # （スクリプト系の出力はハーネスが作る事実なので検証しない）
+        if script_result is None and entry["status"] == "ok":
+            verified, removed = self.verify_output(task_description, entry)
+            entry["verified_output"] = verified
+            entry["removed_lines"] = removed
         # 要点は圧縮専用の呼び出しで作り、台帳と要点リストの両方に残す
-        entry["point"] = self.compress_point(entry)
+        if entry.get("removed_lines") and not (entry.get("verified_output") or "").strip():
+            entry["point"] = (f"{entry['name']}: 出力に裏付けのない記述があり"
+                              "下書きから除いた")[:POINT_MAX_CHARS]
+        else:
+            entry["point"] = self.compress_point(entry)
         self.points.append(entry["point"])
         if len(self.points) > POINTS_MAX:
             self._prioritize_points()
@@ -268,13 +348,21 @@ class NaakoAgent:
         少しずつ書き足してきた蓄積として作る（下書きはディスクに置く
         ので、1回の生成量に縛られず大きくできる）。
         """
+        removed = entry.get("removed_lines", 0)
         if entry.get("status") == "error":
             body = "（このタスクはエラーで終了しました）"
         else:
-            body = (entry.get("output") or "").strip()[:4000]
-        if not body:
+            body = (entry.get("verified_output")
+                    if entry.get("verified_output") is not None
+                    else entry.get("output") or "").strip()[:4000]
+        if not body and not removed:
             return
-        self.ws.append("draft.md", f"\n## {entry.get('name', 'タスク')}\n{body}\n")
+        section = f"\n## {entry.get('name', 'タスク')}\n"
+        if body:
+            section += f"{body}\n"
+        if removed:
+            section += f"（裏付けのない記述 {removed}行を除いた）\n"
+        self.ws.append("draft.md", section)
 
     def _draft_body(self) -> str:
         """下書きの本文（ヘッダ行を除いた書き足し部分）を返す。"""
